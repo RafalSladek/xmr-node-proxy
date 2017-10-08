@@ -10,7 +10,7 @@
       "password": "proxy:proxy@crypto-pool.net",
       "keepAlive": true,
       "coin": "xmr",
-      "default": false
+      "default": true
     },
     {
       "hostname": "mine.xmrpool.net",
@@ -22,7 +22,7 @@
       "password": "proxy:proxy@crypto-pool.net",
       "keepAlive": true,
       "coin": "xmr",
-      "default": true
+      "default": false
     }
   ],
   "listeningPorts": [
