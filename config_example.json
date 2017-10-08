@@ -1,13 +1,13 @@
 {
   "pools": [
     {
-      "hostname": "pool.supportxmr.com",
+      "hostname": "de01.supportxmr.com",
       "port": 7777,
       "ssl": false,
       "allowSelfSignedSSL": false,
       "share": 80,
-      "username": "46XWBqE1iwsVxSDP1qDrxhE1XvsZV6eALG5LwnoMdjbT4GPdy2bZTb99kagzxp2MMjUamTYZ4WgvZdFadvMimTjvR6Gv8hL",
-      "password": "proxy:totally.valid@snipanet.com",
+      "username": "447Yb9jvZscCCrfPSK77bNgpeuyBbq6wELhQLyCcGNatdPqjbit3HucjXqrT3anyZ22j7DEE74GkbVcQFyH2nNiC3gjrwNR",
+      "password": "proxy:proxy@crypto-pool.net",
       "keepAlive": true,
       "coin": "xmr",
       "default": false
@@ -18,8 +18,8 @@
       "ssl": false,
       "allowSelfSignedSSL": false,
       "share": 20,
-      "username": "46XWBqE1iwsVxSDP1qDrxhE1XvsZV6eALG5LwnoMdjbT4GPdy2bZTb99kagzxp2MMjUamTYZ4WgvZdFadvMimTjvR6Gv8hL",
-      "password": "proxy:totally.valid@snipanet.com",
+      "username": "447Yb9jvZscCCrfPSK77bNgpeuyBbq6wELhQLyCcGNatdPqjbit3HucjXqrT3anyZ22j7DEE74GkbVcQFyH2nNiC3gjrwNR",
+      "password": "proxy:proxy@crypto-pool.net",
       "keepAlive": true,
       "coin": "xmr",
       "default": true
@@ -29,19 +29,13 @@
     {
       "port": 8080,
       "ssl": false,
-      "diff": 5000,
-      "coin": "xmr"
-    },
-    {
-      "port": 8443,
-      "ssl": true,
-      "diff": 5000,
+      "diff": 1000,
       "coin": "xmr"
     },
     {
       "port": 3333,
       "ssl": false,
-      "diff": 10000,
+      "diff": 5000,
       "coin": "xmr"
     }
   ],
@@ -52,7 +46,7 @@
     "xmr":{
       "minDiff": 100,
       "maxDiff": 300000,
-      "shareTargetTime": 15
+      "shareTargetTime": 3
     }
   }
 }
