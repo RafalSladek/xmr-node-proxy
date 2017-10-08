@@ -37,6 +37,12 @@
       "ssl": false,
       "diff": 5000,
       "coin": "xmr"
+    },
+    {
+      "port": 7777,
+      "ssl": false,
+      "diff": 10000,
+      "coin": "xmr"
     }
   ],
   "bindAddress": "0.0.0.0",
