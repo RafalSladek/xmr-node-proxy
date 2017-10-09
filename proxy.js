@@ -303,25 +303,17 @@ The master performs the following tasks:
 4. Manage and suggest miner changes in order to achieve correct h/s balancing between the various systems.
  */
 function connectPools() {
-    let poolUrls = [];
-    var i = 0;
     global.config.pools.forEach(function (poolData) {
         if (activePools.hasOwnProperty(poolData.hostname)) {
-            poolUrls[0] = poolData.hostname;
-            i++;
             return;
         }
         activePools[poolData.hostname] = new Pool(poolData);
         activePools[poolData.hostname].connect();
     });
-    var pools = probe.metric({
-        name: 'Pools'
-    });
-    pools.set(poolUrls.join(","));
     var devfee = probe.metric({
         name: 'DevFee'
     });
-    devfee.set(global.config.developerShare / 100);
+    devfee.set(global.config.developerShare + "%");
     let seen_coins = {};
     if (global.config.developerShare > 0) {
         for (let pool in activePools) {
@@ -381,6 +373,11 @@ function balanceWorkers() {
             }
         }
     }
+    var pools = probe.metric({
+        name: 'Pools'
+    });
+    pools.set(poolStates);
+
     /*
     poolStates now contains an object that looks approximately like:
     poolStates = {
