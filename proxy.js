@@ -373,10 +373,6 @@ function balanceWorkers() {
             }
         }
     }
-    var pools = probe.metric({
-        name: 'Pools'
-    });
-    pools.set(poolStates);
 
     /*
     poolStates now contains an object that looks approximately like:
