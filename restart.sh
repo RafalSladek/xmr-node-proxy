@@ -1,3 +1,3 @@
 #!/bin/bash
 
-pm2 restart proxy
+pm2 pullAndRestart proxy
