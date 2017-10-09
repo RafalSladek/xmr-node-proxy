@@ -8,13 +8,13 @@ const uuidV4 = require('uuid/v4');
 const support = require('./lib/support.js')();
 global.config = require('./config.json');
 const pmx = require('pmx').init({
-    http          : true, // HTTP routes logging (default: true)
-    ignore_routes : [/socket\.io/, /notFound/], // Ignore http routes with this pattern (Default: [])
-    errors        : true, // Exceptions logging (default: true)
-    custom_probes : true, // Auto expose JS Loop Latency and HTTP req/s as custom metrics
-    network       : true, // Network monitoring at the application level
-    ports         : true  // Shows which ports your app is listening on (default: false)
-  });
+    http: true, // HTTP routes logging (default: true)
+    ignore_routes: [/socket\.io/, /notFound/], // Ignore http routes with this pattern (Default: [])
+    errors: true, // Exceptions logging (default: true)
+    custom_probes: true, // Auto expose JS Loop Latency and HTTP req/s as custom metrics
+    network: true, // Network monitoring at the application level
+    ports: true  // Shows which ports your app is listening on (default: false)
+});
 const probe = pmx.probe();
 
 /*
@@ -50,15 +50,15 @@ let bans = {};
 let activePools = {};
 let activeWorkers = {};
 let defaultPools = {};
-let masterStats = {shares: 0, blocks: 0, hashes: 0};
+let masterStats = { shares: 0, blocks: 0, hashes: 0 };
 
 // IPC Registry
 function masterMessageHandler(worker, message, handle) {
-    if (typeof message !== 'undefined' && 'type' in message){
+    if (typeof message !== 'undefined' && 'type' in message) {
         switch (message.type) {
             case 'blockFind':
             case 'shareFind':
-                if (message.host in activePools){
+                if (message.host in activePools) {
                     activePools[message.host].sendShare(worker, message.data);
                 }
                 break;
@@ -67,10 +67,10 @@ function masterMessageHandler(worker, message, handle) {
                     type: 'poolState',
                     data: Object.keys(activePools)
                 });
-                for (let hostname in activePools){
-                    if (activePools.hasOwnProperty(hostname)){
+                for (let hostname in activePools) {
+                    if (activePools.hasOwnProperty(hostname)) {
                         let pool = activePools[hostname];
-                        if (!pool.active || pool.activeBlocktemplate === null){
+                        if (!pool.active || pool.activeBlocktemplate === null) {
                             continue;
                         }
                         worker.send({
@@ -91,18 +91,18 @@ function masterMessageHandler(worker, message, handle) {
 function slaveMessageHandler(message) {
     switch (message.type) {
         case 'newBlockTemplate':
-            if (message.host in activePools){
-                if(activePools[message.host].activeBlocktemplate){
+            if (message.host in activePools) {
+                if (activePools[message.host].activeBlocktemplate) {
                     debug.workers(`Received a new block template for ${message.host} and have one in cache.  Storing`);
                     activePools[message.host].pastBlockTemplates.enq(activePools[message.host].activeBlocktemplate);
                 } else {
                     debug.workers(`Received a new block template for ${message.host} do not have one in cache.`);
                 }
                 activePools[message.host].activeBlocktemplate = new activePools[message.host].coinFuncs.BlockTemplate(message.data);
-                for (let miner in activeMiners){
-                    if (activeMiners.hasOwnProperty(miner)){
+                for (let miner in activeMiners) {
+                    if (activeMiners.hasOwnProperty(miner)) {
                         let realMiner = activeMiners[miner];
-                        if (realMiner.pool === message.host){
+                        if (realMiner.pool === message.host) {
                             realMiner.messageSender('job', realMiner.getJob(realMiner, activePools[message.host].activeBlocktemplate));
                         }
                     }
@@ -110,10 +110,10 @@ function slaveMessageHandler(message) {
             }
             break;
         case 'poolState':
-            message.data.forEach(function(hostname){
-                if(!(hostname in activePools)){
-                    global.config.pools.forEach(function(poolData){
-                        if (hostname === poolData.hostname){
+            message.data.forEach(function (hostname) {
+                if (!(hostname in activePools)) {
+                    global.config.pools.forEach(function (poolData) {
+                        if (hostname === poolData.hostname) {
                             activePools[hostname] = new Pool(poolData);
                         }
                     });
@@ -121,22 +121,22 @@ function slaveMessageHandler(message) {
             });
             break;
         case 'changePool':
-            if (activeMiners.hasOwnProperty(message.worker) && activePools.hasOwnProperty(message.pool)){
+            if (activeMiners.hasOwnProperty(message.worker) && activePools.hasOwnProperty(message.pool)) {
                 activeMiners[message.worker].pool = message.pool;
                 activeMiners[message.worker].messageSender('job',
                     activeMiners[message.worker].getJob(activeMiners[message.worker], activePools[message.pool].activeBlocktemplate, true));
             }
             break;
         case 'disablePool':
-            if (activePools.hasOwnProperty(message.pool)){
+            if (activePools.hasOwnProperty(message.pool)) {
                 activePools[message.pool].active = false;
                 checkActivePools();
             }
             break;
         case 'enablePool':
-            if (activePools.hasOwnProperty(message.pool)){
+            if (activePools.hasOwnProperty(message.pool)) {
                 activePools[message.pool].active = true;
-                process.send({type: 'needPoolState'});
+                process.send({ type: 'needPoolState' });
             }
             break;
     }
@@ -159,7 +159,7 @@ function readConfig() {
 }
 
 // Pool Definition
-function Pool(poolData){
+function Pool(poolData) {
     /*
     Pool data is the following:
      {
@@ -204,18 +204,18 @@ function Pool(poolData){
     this.socket = null;
     this.allowSelfSignedSSL = true;
     // Partial checks for people whom havn't upgraded yet
-    if (poolData.hasOwnProperty('allowSelfSignedSSL')){
+    if (poolData.hasOwnProperty('allowSelfSignedSSL')) {
         this.allowSelfSignedSSL = !poolData.allowSelfSignedSSL;
     }
 
-    this.connect = function(){
-        for (let worker in cluster.workers){
-            if (cluster.workers.hasOwnProperty(worker)){
-                cluster.workers[worker].send({type: 'disablePool', pool: this.hostname});
+    this.connect = function () {
+        for (let worker in cluster.workers) {
+            if (cluster.workers.hasOwnProperty(worker)) {
+                cluster.workers[worker].send({ type: 'disablePool', pool: this.hostname });
             }
         }
         try {
-            if (this.socket !== null){
+            if (this.socket !== null) {
                 this.socket.end();
                 this.socket.destroy();
             }
@@ -224,40 +224,40 @@ function Pool(poolData){
         }
         this.socket = null;
         this.active = false;
-        if (this.ssl){
-            this.socket = tls.connect(this.port, this.hostname, {rejectUnauthorized: this.allowSelfSignedSSL}).on('connect', ()=>{
+        if (this.ssl) {
+            this.socket = tls.connect(this.port, this.hostname, { rejectUnauthorized: this.allowSelfSignedSSL }).on('connect', () => {
                 poolSocket(this.hostname);
-            }).on('error', (err)=>{
+            }).on('error', (err) => {
                 this.connect();
                 console.warn(`${global.threadName}Socket error from ${this.hostname} ${err}`);
             });
         } else {
-            this.socket = net.connect(this.port, this.hostname).on('connect', ()=>{
+            this.socket = net.connect(this.port, this.hostname).on('connect', () => {
                 poolSocket(this.hostname);
-            }).on('error', (err)=>{
+            }).on('error', (err) => {
                 this.connect();
                 console.warn(`${global.threadName}Socket error from ${this.hostname} ${err}`);
             });
         }
     };
-    this.heartbeat = function(){
-        if (this.keepAlive){
+    this.heartbeat = function () {
+        if (this.keepAlive) {
             this.sendData('keepalived');
         }
     };
     this.sendData = function (method, params) {
-        if (typeof params === 'undefined'){
+        if (typeof params === 'undefined') {
             params = {};
         }
         let rawSend = {
             method: method,
             id: this.sendId++,
         };
-        if (typeof this.id !== 'undefined'){
+        if (typeof this.id !== 'undefined') {
             params.id = this.id;
         }
         rawSend.params = params;
-        if (!this.socket.writable){
+        if (!this.socket.writable) {
             return false;
         }
         this.socket.write(JSON.stringify(rawSend) + '\n');
@@ -271,9 +271,9 @@ function Pool(poolData){
             agent: 'xmr-node-proxy/0.0.1'
         });
         this.active = true;
-        for (let worker in cluster.workers){
-            if (cluster.workers.hasOwnProperty(worker)){
-                cluster.workers[worker].send({type: 'enablePool', pool: this.hostname});
+        for (let worker in cluster.workers) {
+            if (cluster.workers.hasOwnProperty(worker)) {
+                cluster.workers[worker].send({ type: 'enablePool', pool: this.hostname });
             }
         }
     };
@@ -282,7 +282,7 @@ function Pool(poolData){
         let job = this.poolJobs[worker.id].toarray().filter(function (job) {
             return job.id === shareData.btID;
         })[0];
-        if (job){
+        if (job) {
             this.sendData('submit', {
                 job_id: job.masterJobID,
                 nonce: shareData.nonce,
@@ -302,23 +302,35 @@ The master performs the following tasks:
 3. Handle all to/from the various pool servers.
 4. Manage and suggest miner changes in order to achieve correct h/s balancing between the various systems.
  */
-function connectPools(){
+function connectPools() {
+    let poolUrls = [];
+    var i = 0;
     global.config.pools.forEach(function (poolData) {
-        if (activePools.hasOwnProperty(poolData.hostname)){
+        if (activePools.hasOwnProperty(poolData.hostname)) {
+            poolUrls[0] = poolData.hostname;
+            i++;
             return;
         }
         activePools[poolData.hostname] = new Pool(poolData);
         activePools[poolData.hostname].connect();
     });
+    var pools = probe.metric({
+        name: 'Pools'
+    });
+    pools.set(poolUrls.join(","));
+    var devfee = probe.metric({
+        name: 'DevFee'
+    });
+    devfee.set(developerShare / 100);
     let seen_coins = {};
-    if (global.config.developerShare > 0){
-        for (let pool in activePools){
-            if (activePools.hasOwnProperty(pool)){
-                if (seen_coins.hasOwnProperty(activePools[pool].coin)){
+    if (global.config.developerShare > 0) {
+        for (let pool in activePools) {
+            if (activePools.hasOwnProperty(pool)) {
+                if (seen_coins.hasOwnProperty(activePools[pool].coin)) {
                     return;
                 }
                 let devPool = activePools[pool].coinFuncs.devPool;
-                if (activePools.hasOwnProperty(devPool.hostname)){
+                if (activePools.hasOwnProperty(devPool.hostname)) {
                     return;
                 }
                 activePools[devPool.hostname] = new Pool(devPool);
@@ -327,14 +339,14 @@ function connectPools(){
             }
         }
     }
-    for (let coin in seen_coins){
-        if (seen_coins.hasOwnProperty(coin)){
+    for (let coin in seen_coins) {
+        if (seen_coins.hasOwnProperty(coin)) {
             activeCoins[coin] = true;
         }
     }
 }
 
-function balanceWorkers(){
+function balanceWorkers() {
     /*
     This function deals with handling how the pool deals with getting traffic balanced to the various pools.
     Step 1: Enumerate all workers (Child servers), and their miners/coins into known states
@@ -348,11 +360,11 @@ function balanceWorkers(){
      */
     let minerStates = {};
     let poolStates = {};
-    for (let poolName in activePools){
-        if (activePools.hasOwnProperty(poolName)){
+    for (let poolName in activePools) {
+        if (activePools.hasOwnProperty(poolName)) {
             let pool = activePools[poolName];
-            if (!poolStates.hasOwnProperty(pool.coin)){
-                poolStates[pool.coin] = {'percentage': 0, 'devPool': false};
+            if (!poolStates.hasOwnProperty(pool.coin)) {
+                poolStates[pool.coin] = { 'percentage': 0, 'devPool': false };
             }
             poolStates[pool.coin][poolName] = {
                 miners: {},
@@ -361,7 +373,7 @@ function balanceWorkers(){
                 devPool: pool.devPool,
                 idealRate: 0
             };
-            if(pool.devPool){
+            if (pool.devPool) {
                 poolStates[pool.coin].devPool = poolName;
                 debug.balancer(`Found a developer pool enabled.  Pool is: ${poolName}`);
             } else {
@@ -393,17 +405,17 @@ function balanceWorkers(){
             }
     }
      */
-    for (let coin in poolStates){
-        if(poolStates.hasOwnProperty(coin)){
+    for (let coin in poolStates) {
+        if (poolStates.hasOwnProperty(coin)) {
             let percentModifier = 1;
             let newPercentage = 0;
-            if (poolStates[coin].percentage !== 100){
+            if (poolStates[coin].percentage !== 100) {
                 debug.balancer(`Pools on ${coin} are using ${poolStates[coin].percentage}% balance.  Adjusting.`);
                 // Need to adjust all the pools that aren't the dev pool.
-                percentModifier = 100/poolStates[coin].percentage;
-                for (let pool in poolStates[coin]){
-                    if (poolStates[coin].hasOwnProperty(pool) && activePools.hasOwnProperty(pool)){
-                        if (poolStates[coin][pool].devPool){
+                percentModifier = 100 / poolStates[coin].percentage;
+                for (let pool in poolStates[coin]) {
+                    if (poolStates[coin].hasOwnProperty(pool) && activePools.hasOwnProperty(pool)) {
+                        if (poolStates[coin][pool].devPool) {
                             continue;
                         }
                         poolStates[coin][pool].percentage *= percentModifier;
@@ -411,12 +423,12 @@ function balanceWorkers(){
                     }
                 }
                 let finalMod = 0;
-                if (newPercentage !== 100){
+                if (newPercentage !== 100) {
                     finalMod = 100 - newPercentage;
                 }
-                for (let pool in poolStates[coin]){
-                    if (poolStates[coin].hasOwnProperty(pool) && activePools.hasOwnProperty(pool)){
-                        if (poolStates[coin][pool].devPool){
+                for (let pool in poolStates[coin]) {
+                    if (poolStates[coin].hasOwnProperty(pool) && activePools.hasOwnProperty(pool)) {
+                        if (poolStates[coin][pool].devPool) {
                             continue;
                         }
                         poolStates[coin][pool].share += finalMod;
@@ -424,7 +436,7 @@ function balanceWorkers(){
                     }
                 }
             }
-            delete(poolStates[coin].totalPercentage);
+            delete (poolStates[coin].totalPercentage);
         }
     }
     /*
@@ -448,13 +460,13 @@ function balanceWorkers(){
          }
      }
      */
-    for (let workerID in activeWorkers){
-        if (activeWorkers.hasOwnProperty(workerID)){
-            for (let minerID in activeWorkers[workerID]){
-                if (activeWorkers[workerID].hasOwnProperty(minerID)){
+    for (let workerID in activeWorkers) {
+        if (activeWorkers.hasOwnProperty(workerID)) {
+            for (let minerID in activeWorkers[workerID]) {
+                if (activeWorkers[workerID].hasOwnProperty(minerID)) {
                     let miner = activeWorkers[workerID][minerID];
                     let minerCoin = miner.coin;
-                    if (!minerStates.hasOwnProperty(minerCoin)){
+                    if (!minerStates.hasOwnProperty(minerCoin)) {
                         minerStates[minerCoin] = {
                             hashrate: 0
                         };
@@ -471,55 +483,55 @@ function balanceWorkers(){
     the approximate hashrate that should be moved between pools once the general hashes/second per pool/worker
     is determined.
      */
-    for (let coin in poolStates){
-        if (poolStates.hasOwnProperty(coin) && minerStates.hasOwnProperty(coin)){
+    for (let coin in poolStates) {
+        if (poolStates.hasOwnProperty(coin) && minerStates.hasOwnProperty(coin)) {
             let coinMiners = minerStates[coin];
             let coinPools = poolStates[coin];
             let devPool = coinPools.devPool;
             let highPools = {};
             let lowPools = {};
-            delete(coinPools.devPool);
-            if (devPool){
-                let devHashrate = Math.floor(coinMiners.hashrate * (global.config.developerShare/100));
+            delete (coinPools.devPool);
+            if (devPool) {
+                let devHashrate = Math.floor(coinMiners.hashrate * (global.config.developerShare / 100));
                 coinMiners.hashrate -= devHashrate;
                 coinPools[devPool].idealRate = devHashrate;
                 debug.balancer(`DevPool on ${coin} is enabled.  Set to ${global.config.developerShare}% and ideally would have ${coinPools[devPool].idealRate}.  Currently has ${coinPools[devPool].hashrate}`);
-                if (coinPools[devPool].idealRate > coinPools[devPool].hashrate){
+                if (coinPools[devPool].idealRate > coinPools[devPool].hashrate) {
                     lowPools[devPool] = coinPools[devPool].idealRate - coinPools[devPool].hashrate;
                     debug.balancer(`Pool ${devPool} is running a low hashrate compared to ideal.  Want to increase by: ${lowPools[devPool]} h/s`);
-                } else if (coinPools[devPool].idealRate < coinPools[devPool].hashrate){
+                } else if (coinPools[devPool].idealRate < coinPools[devPool].hashrate) {
                     highPools[devPool] = coinPools[devPool].hashrate - coinPools[devPool].idealRate;
                     debug.balancer(`Pool ${devPool} is running a high hashrate compared to ideal.  Want to decrease by: ${highPools[devPool]} h/s`);
                 }
             }
-            for (let pool in coinPools){
-                if (coinPools.hasOwnProperty(pool) && pool !== devPool && activePools.hasOwnProperty(pool)){
-                    coinPools[pool].idealRate = Math.floor(coinMiners.hashrate * (coinPools[pool].percentage/100));
-                    if (coinPools[pool].idealRate > coinPools[pool].hashrate){
+            for (let pool in coinPools) {
+                if (coinPools.hasOwnProperty(pool) && pool !== devPool && activePools.hasOwnProperty(pool)) {
+                    coinPools[pool].idealRate = Math.floor(coinMiners.hashrate * (coinPools[pool].percentage / 100));
+                    if (coinPools[pool].idealRate > coinPools[pool].hashrate) {
                         lowPools[pool] = coinPools[pool].idealRate - coinPools[pool].hashrate;
                         debug.balancer(`Pool ${pool} is running a low hashrate compared to ideal.  Want to increase by: ${lowPools[pool]} h/s`);
-                    } else if (coinPools[pool].idealRate < coinPools[pool].hashrate){
+                    } else if (coinPools[pool].idealRate < coinPools[pool].hashrate) {
                         highPools[pool] = coinPools[pool].hashrate - coinPools[pool].idealRate;
                         debug.balancer(`Pool ${pool} is running a high hashrate compared to ideal.  Want to decrease by: ${highPools[pool]} h/s`);
                     }
                     activePools[pool].share = coinPools[pool].percentage;
                 }
             }
-            if (Object.keys(highPools).length === 0 && Object.keys(lowPools).length === 0){
+            if (Object.keys(highPools).length === 0 && Object.keys(lowPools).length === 0) {
                 debug.balancer(`No pools in high or low Pools, so waiting for the next cycle.`);
                 continue;
             }
             let freed_miners = {};
-            if (Object.keys(highPools).length > 0){
-                for (let pool in highPools){
-                    if (highPools.hasOwnProperty(pool)){
-                        for (let miner in coinPools[pool].miners){
-                            if (coinPools[pool].miners.hasOwnProperty(miner)){
-                                if (coinPools[pool].miners[miner] < highPools[pool] && coinPools[pool].miners[miner] !== 0){
+            if (Object.keys(highPools).length > 0) {
+                for (let pool in highPools) {
+                    if (highPools.hasOwnProperty(pool)) {
+                        for (let miner in coinPools[pool].miners) {
+                            if (coinPools[pool].miners.hasOwnProperty(miner)) {
+                                if (coinPools[pool].miners[miner] < highPools[pool] && coinPools[pool].miners[miner] !== 0) {
                                     highPools[pool] -= coinPools[pool].miners[miner];
                                     freed_miners[miner] = coinPools[pool].miners[miner];
                                     debug.balancer(`Freeing up ${miner} on ${pool} for ${freed_miners[miner]} h/s`);
-                                    delete(coinPools[pool].miners[miner]);
+                                    delete (coinPools[pool].miners[miner]);
                                 }
                             }
                         }
@@ -527,39 +539,39 @@ function balanceWorkers(){
                 }
             }
             let minerChanges = {};
-            if (Object.keys(lowPools).length > 0){
-                for (let pool in lowPools){
-                    if (lowPools.hasOwnProperty(pool)){
+            if (Object.keys(lowPools).length > 0) {
+                for (let pool in lowPools) {
+                    if (lowPools.hasOwnProperty(pool)) {
                         minerChanges[pool] = [];
-                        if (Object.keys(freed_miners).length > 0){
-                            for (let miner in freed_miners){
-                                if (freed_miners.hasOwnProperty(miner)){
-                                    if (freed_miners[miner] <= lowPools[pool]){
+                        if (Object.keys(freed_miners).length > 0) {
+                            for (let miner in freed_miners) {
+                                if (freed_miners.hasOwnProperty(miner)) {
+                                    if (freed_miners[miner] <= lowPools[pool]) {
                                         minerChanges[pool].push(miner);
                                         lowPools[pool] -= freed_miners[miner];
                                         debug.balancer(`Snagging up ${miner} for ${pool} for ${freed_miners[miner]} h/s`);
-                                        delete(freed_miners[miner]);
+                                        delete (freed_miners[miner]);
                                     }
                                 }
                             }
                         }
-                        if(lowPools[pool] > 100){
-                            for (let donatorPool in coinPools){
-                                if(coinPools.hasOwnProperty(donatorPool) && !lowPools.hasOwnProperty(donatorPool)){
-                                    for (let miner in coinPools[donatorPool].miners){
-                                        if (coinPools[donatorPool].miners.hasOwnProperty(miner)){
-                                            if (coinPools[donatorPool].miners[miner] < lowPools[pool] && coinPools[donatorPool].miners[miner] !== 0){
+                        if (lowPools[pool] > 100) {
+                            for (let donatorPool in coinPools) {
+                                if (coinPools.hasOwnProperty(donatorPool) && !lowPools.hasOwnProperty(donatorPool)) {
+                                    for (let miner in coinPools[donatorPool].miners) {
+                                        if (coinPools[donatorPool].miners.hasOwnProperty(miner)) {
+                                            if (coinPools[donatorPool].miners[miner] < lowPools[pool] && coinPools[donatorPool].miners[miner] !== 0) {
                                                 minerChanges[pool].push(miner);
                                                 lowPools[pool] -= coinPools[donatorPool].miners[miner];
                                                 debug.balancer(`Moving ${miner} for ${pool} from ${donatorPool} for ${coinPools[donatorPool].miners[miner]} h/s`);
-                                                delete(coinPools[donatorPool].miners[miner]);
+                                                delete (coinPools[donatorPool].miners[miner]);
                                             }
-                                            if (lowPools[pool] < 50){
+                                            if (lowPools[pool] < 50) {
                                                 break;
                                             }
                                         }
                                     }
-                                    if (lowPools[pool] < 50){
+                                    if (lowPools[pool] < 50) {
                                         break;
                                     }
                                 }
@@ -568,9 +580,9 @@ function balanceWorkers(){
                     }
                 }
             }
-            for (let pool in minerChanges){
-                if(minerChanges.hasOwnProperty(pool) && minerChanges[pool].length > 0){
-                    minerChanges[pool].forEach(function(miner){
+            for (let pool in minerChanges) {
+                if (minerChanges.hasOwnProperty(pool) && minerChanges[pool].length > 0) {
+                    minerChanges[pool].forEach(function (miner) {
                         let minerBits = miner.split('_');
                         cluster.workers[minerBits[0]].send({
                             type: 'changePool',
@@ -584,20 +596,20 @@ function balanceWorkers(){
     }
 }
 
-function enumerateWorkerStats(){
-    let stats, global_stats = {miners: 0, hashes: 0, hashRate: 0, diff: 0};
-    for (let poolID in activeWorkers){
-        if (activeWorkers.hasOwnProperty(poolID)){
+function enumerateWorkerStats() {
+    let stats, global_stats = { miners: 0, hashes: 0, hashRate: 0, diff: 0 };
+    for (let poolID in activeWorkers) {
+        if (activeWorkers.hasOwnProperty(poolID)) {
             stats = {
                 miners: 0,
                 hashes: 0,
                 hashRate: 0,
                 diff: 0
             };
-            for (let workerID in activeWorkers[poolID]){
+            for (let workerID in activeWorkers[poolID]) {
                 if (activeWorkers[poolID].hasOwnProperty(workerID)) {
                     let workerData = activeWorkers[poolID][workerID];
-                    if (workerData.lastContact < ((Math.floor((Date.now())/1000) - 120))){
+                    if (workerData.lastContact < ((Math.floor((Date.now()) / 1000) - 120))) {
                         delete activeWorkers[poolID][workerID];
                         continue;
                     }
@@ -611,26 +623,26 @@ function enumerateWorkerStats(){
             global_stats.hashes += stats.hashes;
             global_stats.hashRate += stats.hashRate;
             global_stats.diff += stats.diff;
-           
-            debug.workers(`Worker: ${poolID} currently has ${stats.miners} miners connected at ${stats.hashRate} h/s with an average diff of ${Math.floor(stats.diff/stats.miners)}`);
+
+            debug.workers(`Worker: ${poolID} currently has ${stats.miners} miners connected at ${stats.hashRate} h/s with an average diff of ${Math.floor(stats.diff / stats.miners)}`);
         }
     }
     var miners = probe.metric({
-        name    : 'Miners'
+        name: 'Miners'
     });
     var hashRate = probe.metric({
-        name    : 'HashRate'
+        name: 'HashRate'
     });
     var diff = probe.metric({
-        name    : 'Diff'
+        name: 'Diff'
     });
     miners.set(global_stats.miners);
     hashRate.set(global_stats.hashRate);
-    diff.set(Math.floor(global_stats.diff/global_stats.miners));
-    console.log(`The proxy currently has ${global_stats.miners} miners connected at ${global_stats.hashRate} h/s with an average diff of ${Math.floor(global_stats.diff/global_stats.miners)}`);
+    diff.set(Math.floor(global_stats.diff / global_stats.miners));
+    console.log(`The proxy currently has ${global_stats.miners} miners connected at ${global_stats.hashRate} h/s with an average diff of ${Math.floor(global_stats.diff / global_stats.miners)}`);
 }
 
-function poolSocket(hostname){
+function poolSocket(hostname) {
     let pool = activePools[hostname];
     let socket = pool.socket;
     let dataBuffer = '';
@@ -683,23 +695,23 @@ function poolSocket(hostname){
     setInterval(pool.heartbeat, 30000);
 }
 
-function handlePoolMessage(jsonData, hostname){
+function handlePoolMessage(jsonData, hostname) {
     let pool = activePools[hostname];
     debug.pool(`Received ${JSON.stringify(jsonData)} from ${pool.hostname}`);
-    if (jsonData.hasOwnProperty('method')){
+    if (jsonData.hasOwnProperty('method')) {
         // The only time method is set, is with a push of data.  Everything else is a reply/
-        if (jsonData.method === 'job'){
+        if (jsonData.method === 'job') {
             handleNewBlockTemplate(jsonData.params, hostname);
         }
     } else {
-        if (jsonData.error !== null){
-            if (jsonData.error.message === 'Unauthenticated'){
+        if (jsonData.error !== null) {
+            if (jsonData.error.message === 'Unauthenticated') {
                 activePools[hostname].connect();
             }
             return console.error(`Error response from pool ${pool.hostname}: ${JSON.stringify(jsonData.error)}`);
         }
         let sendLog = pool.sendLog[jsonData.id];
-        switch(sendLog.method){
+        switch (sendLog.method) {
             case 'login':
                 pool.id = jsonData.result.id;
                 handleNewBlockTemplate(jsonData.result.job, hostname);
@@ -714,11 +726,11 @@ function handlePoolMessage(jsonData, hostname){
     }
 }
 
-function handleNewBlockTemplate(blockTemplate, hostname){
+function handleNewBlockTemplate(blockTemplate, hostname) {
     let pool = activePools[hostname];
     console.log(`Received new block template from ${pool.hostname}`);
-    if(pool.activeBlocktemplate){
-        if (pool.activeBlocktemplate.job_id === blockTemplate.job_id){
+    if (pool.activeBlocktemplate) {
+        if (pool.activeBlocktemplate.job_id === blockTemplate.job_id) {
             debug.pool('No update with this job, it is an upstream dupe');
             return;
         }
@@ -726,8 +738,8 @@ function handleNewBlockTemplate(blockTemplate, hostname){
         pool.pastBlockTemplates.enq(pool.activeBlocktemplate);
     }
     pool.activeBlocktemplate = new pool.coinFuncs.MasterBlockTemplate(blockTemplate);
-    for (let id in cluster.workers){
-        if (cluster.workers.hasOwnProperty(id)){
+    for (let id in cluster.workers) {
+        if (cluster.workers.hasOwnProperty(id)) {
             cluster.workers[id].send({
                 host: hostname,
                 type: 'newBlockTemplate',
@@ -773,7 +785,7 @@ function Miner(id, params, ip, pushMessage, portData) {
         this.valid_miner = false;
     }
 
-    if (activePools[this.pool].activeBlocktemplate === null){
+    if (activePools[this.pool].activeBlocktemplate === null) {
         this.error = "No active block template";
         this.valid_miner = false;
     }
@@ -798,14 +810,14 @@ function Miner(id, params, ip, pushMessage, portData) {
 
     this.cachedJob = null;
 
-    this.minerStats = function(){
+    this.minerStats = function () {
         return {
             shares: this.shares,
             blocks: this.blocks,
             hashes: this.hashes,
-            avgSpeed: Math.floor(this.hashes/(Math.floor((Date.now() - this.connectTime)/1000))),
+            avgSpeed: Math.floor(this.hashes / (Math.floor((Date.now() - this.connectTime) / 1000))),
             diff: this.difficulty,
-            lastContact: Math.floor(this.lastContact/1000),
+            lastContact: Math.floor(this.lastContact / 1000),
             lastShare: this.lastShareTime,
             coin: this.coin,
             pool: this.pool,
@@ -814,7 +826,7 @@ function Miner(id, params, ip, pushMessage, portData) {
     };
 
     // Support functions for how miners activate and run.
-    this.updateDifficulty = function(){
+    this.updateDifficulty = function () {
         if (this.hashes > 0 && !this.fixed_diff) {
             this.setNewDiff(Math.floor(this.hashes / (Math.floor((Date.now() - this.connectTime) / 1000))) * this.coinSettings.shareTargetTime);
         }
@@ -833,10 +845,10 @@ function Miner(id, params, ip, pushMessage, portData) {
             return;
         }
         debug.diff(global.threadName + "Difficulty change to: " + this.newDiff + " For: " + this.logString);
-        if (this.hashes > 0){
-            debug.diff(global.threadName + "Hashes: " + this.hashes + " in: " + Math.floor((Date.now() - this.connectTime)/1000) + " seconds gives: " +
-                Math.floor(this.hashes/(Math.floor((Date.now() - this.connectTime)/1000))) + " hashes/second or: " +
-                Math.floor(this.hashes/(Math.floor((Date.now() - this.connectTime)/1000))) *this.coinSettings.shareTargetTime + " difficulty versus: " + this.newDiff);
+        if (this.hashes > 0) {
+            debug.diff(global.threadName + "Hashes: " + this.hashes + " in: " + Math.floor((Date.now() - this.connectTime) / 1000) + " seconds gives: " +
+                Math.floor(this.hashes / (Math.floor((Date.now() - this.connectTime) / 1000))) + " hashes/second or: " +
+                Math.floor(this.hashes / (Math.floor((Date.now() - this.connectTime) / 1000))) * this.coinSettings.shareTargetTime + " difficulty versus: " + this.newDiff);
         }
         this.messageSender('job', this.getJob(activeMiners[this.id], activePools[this.pool].activeBlocktemplate));
     };
@@ -866,7 +878,7 @@ function handleMinerData(method, params, ip, portData, sendReply, pushMessage) {
                 sendReply(miner.error);
                 return;
             }
-            process.send({type: 'newMiner', data: miner.port});
+            process.send({ type: 'newMiner', data: miner.port });
             activeMiners[minerId] = miner;
             sendReply(null, {
                 id: minerId,
@@ -921,7 +933,7 @@ function handleMinerData(method, params, ip, portData, sendReply, pushMessage) {
 
             if (!blockTemplate) {
                 console.warn(global.threadName + 'Block expired, Height: ' + job.height + ' from ' + miner.logString);
-                if (miner.incremented === false){
+                if (miner.incremented === false) {
                     miner.newDiff = miner.difficulty + 1;
                     miner.incremented = true;
                 } else {
@@ -944,7 +956,7 @@ function handleMinerData(method, params, ip, portData, sendReply, pushMessage) {
             miner.shareTimeBuffer.enq(now - miner.lastShareTime);
             miner.lastShareTime = now;
 
-            sendReply(null, {status: 'OK'});
+            sendReply(null, { status: 'OK' });
             break;
         case 'keepalived':
             if (!miner) {
@@ -987,11 +999,11 @@ function activatePorts() {
                     return;
                 }
                 let sendData = JSON.stringify({
-                        id: jsonData.id,
-                        jsonrpc: "2.0",
-                        error: error ? {code: -1, message: error} : null,
-                        result: result
-                    }) + "\n";
+                    id: jsonData.id,
+                    jsonrpc: "2.0",
+                    error: error ? { code: -1, message: error } : null,
+                    result: result
+                }) + "\n";
                 debug.miners(`Data sent to miner (sendReply): ${sendData}`);
                 socket.write(sendData);
             };
@@ -1009,10 +1021,10 @@ function activatePorts() {
                     return;
                 }
                 let sendData = JSON.stringify({
-                        jsonrpc: "2.0",
-                        method: method,
-                        params: params
-                    }) + "\n";
+                    jsonrpc: "2.0",
+                    method: method,
+                    params: params
+                }) + "\n";
                 debug.miners(`Data sent to miner (pushMessage): ${sendData}`);
                 socket.write(sendData);
             };
@@ -1094,7 +1106,7 @@ function activatePorts() {
 }
 
 function checkActivePools() {
-    for (let badPool in activePools){
+    for (let badPool in activePools) {
         if (activePools.hasOwnProperty(badPool) && !activePools[badPool].active) {
             for (let pool in activePools) {
                 if (activePools.hasOwnProperty(pool) && !activePools[pool].devPool && activePools[pool].coin === activePools[badPool].coin && activePools[pool].active) {
@@ -1148,27 +1160,27 @@ if (cluster.isMaster) {
     setInterval(retargetMiners, global.config.pool.retargetTime * 1000);
     */
     process.on('message', slaveMessageHandler);
-    global.config.pools.forEach(function(poolData){
+    global.config.pools.forEach(function (poolData) {
         activePools[poolData.hostname] = new Pool(poolData);
-        if (poolData.default){
+        if (poolData.default) {
             defaultPools[poolData.coin] = poolData.hostname;
         }
-        if (!activePools.hasOwnProperty(activePools[poolData.hostname].coinFuncs.devPool.hostname)){
+        if (!activePools.hasOwnProperty(activePools[poolData.hostname].coinFuncs.devPool.hostname)) {
             activePools[activePools[poolData.hostname].coinFuncs.devPool.hostname] = new Pool(activePools[poolData.hostname].coinFuncs.devPool);
         }
     });
-    process.send({type: 'needPoolState'});
-    setInterval(function(){
-        for (let minerID in activeMiners){
-            if (activeMiners.hasOwnProperty(minerID)){
+    process.send({ type: 'needPoolState' });
+    setInterval(function () {
+        for (let minerID in activeMiners) {
+            if (activeMiners.hasOwnProperty(minerID)) {
                 activeMiners[minerID].updateDifficulty();
             }
         }
     }, 45000);
-    setInterval(function(){
-        for (let minerID in activeMiners){
-            if (activeMiners.hasOwnProperty(minerID)){
-                process.send({minerID: minerID, data: activeMiners[minerID].minerStats(), type: 'workerStats'});
+    setInterval(function () {
+        for (let minerID in activeMiners) {
+            if (activeMiners.hasOwnProperty(minerID)) {
+                process.send({ minerID: minerID, data: activeMiners[minerID].minerStats(), type: 'workerStats' });
             }
         }
     }, 10000);
