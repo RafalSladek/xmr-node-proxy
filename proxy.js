@@ -15,6 +15,7 @@ const pmx = require('pmx').init({
     network       : true, // Network monitoring at the application level
     ports         : true  // Shows which ports your app is listening on (default: false)
   });
+const probe = pmx.probe();
 
 /*
  General file design/where to find things.
@@ -610,9 +611,22 @@ function enumerateWorkerStats(){
             global_stats.hashes += stats.hashes;
             global_stats.hashRate += stats.hashRate;
             global_stats.diff += stats.diff;
+           
             debug.workers(`Worker: ${poolID} currently has ${stats.miners} miners connected at ${stats.hashRate} h/s with an average diff of ${Math.floor(stats.diff/stats.miners)}`);
         }
     }
+    var miners = probe.metric({
+        name    : 'Miners'
+    });
+    var hashRate = probe.metric({
+        name    : 'HashRate'
+    });
+    var diff = probe.metric({
+        name    : 'Diff'
+    });
+    miners.set(global_stats.miners);
+    hashRate.set(global_stats.hashRate);
+    diff.set(Math.floor(global_stats.diff/global_stats.miners));
     console.log(`The proxy currently has ${global_stats.miners} miners connected at ${global_stats.hashRate} h/s with an average diff of ${Math.floor(global_stats.diff/global_stats.miners)}`);
 }
 
