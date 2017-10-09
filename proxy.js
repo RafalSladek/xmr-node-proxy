@@ -321,7 +321,7 @@ function connectPools() {
     var devfee = probe.metric({
         name: 'DevFee'
     });
-    devfee.set(developerShare / 100);
+    devfee.set(global.config.developerShare / 100);
     let seen_coins = {};
     if (global.config.developerShare > 0) {
         for (let pool in activePools) {
