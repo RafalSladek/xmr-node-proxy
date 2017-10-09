@@ -8,7 +8,7 @@ const uuidV4 = require('uuid/v4');
 const support = require('./lib/support.js')();
 global.config = require('./config.json');
 const pmx = require('pmx').init({
-    http: true, // HTTP routes logging (default: true)
+    http: false, // HTTP routes logging (default: true)
     ignore_routes: [/socket\.io/, /notFound/], // Ignore http routes with this pattern (Default: [])
     errors: true, // Exceptions logging (default: true)
     custom_probes: true, // Auto expose JS Loop Latency and HTTP req/s as custom metrics
