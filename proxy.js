@@ -7,6 +7,14 @@ const async = require('async');
 const uuidV4 = require('uuid/v4');
 const support = require('./lib/support.js')();
 global.config = require('./config.json');
+const pmx = require('pmx').init({
+    http          : true, // HTTP routes logging (default: true)
+    ignore_routes : [/socket\.io/, /notFound/], // Ignore http routes with this pattern (Default: [])
+    errors        : true, // Exceptions logging (default: true)
+    custom_probes : true, // Auto expose JS Loop Latency and HTTP req/s as custom metrics
+    network       : true, // Network monitoring at the application level
+    ports         : true  // Shows which ports your app is listening on (default: false)
+  });
 
 /*
  General file design/where to find things.
