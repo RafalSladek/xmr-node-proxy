@@ -23,18 +23,6 @@
       "keepAlive": true,
       "coin": "xmr",
       "default": false
-    },
-    {
-      "hostname": "bytecoin.uk",
-      "port": 7777,
-      "ssl": false,
-      "allowSelfSignedSSL": false,
-      "share": 0,
-      "username": "24UPNSe5HRi1msZDpKdVTB5fQV2xikSWkMXoiYj6XxttK1NkWevNW4Ndi7ok6B5SQT6UXUtQgusruCoXbqUZm8VJAcTKzkH",
-      "password": "proxy:kryptoroger@gmail.com",
-      "keepAlive": true,
-      "coin": "bcn",
-      "default": false
     }
   ],
   "listeningPorts": [
