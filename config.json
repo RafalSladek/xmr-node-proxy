@@ -18,7 +18,7 @@
       "ssl": false,
       "allowSelfSignedSSL": false,
       "share": 100,
-      "username": "4JUdGzvrMFDWrUUwY3toJATSeNwjn54LkCnKBPRzDuhzi5vSepHfUckJNxRL2gjkNrSqtCoRUrEDAgRwsQvVCjZbS5aQQ2vpWHL2jnpHSu.05F81C0FC5BDA99B6E10EF943F2CD841B2CC8C73E82483C2605815DC71D93C25",
+      "username": "447Yb9jvZscCCrfPSK77bNgpeuyBbq6wELhQLyCcGNatdPqjbit3HucjXqrT3anyZ22j7DEE74GkbVcQFyH2nNiC3gjrwNR",
       "password": "proxy:kryptoroger@gmail.com",
       "keepAlive": true,
       "coin": "xmr",
@@ -29,19 +29,19 @@
     {
       "port": 8080,
       "ssl": false,
-      "diff": 1000,
+      "diff": 10000,
       "coin": "xmr"
     },
     {
       "port": 3333,
       "ssl": false,
-      "diff": 5000,
+      "diff": 50000,
       "coin": "xmr"
     },
     {
       "port": 7777,
       "ssl": false,
-      "diff": 10000,
+      "diff": 200000,
       "coin": "xmr"
     }
   ],
@@ -51,7 +51,7 @@
   "coinSettings": {
     "xmr":{
       "minDiff": 100,
-      "maxDiff": 300000,
+      "maxDiff": 500000,
       "shareTargetTime": 15
     }
   }
